@@ -1,0 +1,192 @@
+<p><strong>Introduction</strong></p>
+<p><em>Why am I writing this?</em>&nbsp; One of my goals for 2014 is to become fluent in Microsoft SQL Server database development and administration.&nbsp; Another goal for 2014 is to become a contributing member of the technical community.&nbsp; While I have some experience working with Microsoft SQL Server in a software quality assurance role, I’ve not gained in-depth or deep knowledge of this platform.&nbsp; I am not yet confident working with Microsoft SQL Server.&nbsp; My goal is to forget what I know and learn as if I’m learning Microsoft SQL Server for the first time.</p>
+<p>&nbsp;</p>
+<p><strong>Target Audience</strong></p>
+<p>The primary audience for this weblog series is myself.&nbsp; That being said, anyone who has never worked with a database may find this series useful; perhaps someone new to the information technology or software quality assurance fields.&nbsp; If you do have experience with Microsoft SQL Server, then you may find useful nuggets of information as we progress to more challenging aspects of SQL Server.</p>
+<p>&nbsp;</p>
+<p><strong>Disclaimer</strong></p>
+<p>I hold Star Wars dear to my heart, and I am using the Star Wars story as a framework for writing about Microsoft SQL Server.</p>
+<p>&nbsp;</p>
+<p><strong>The Problem</strong></p>
+<p>Mon Mothma and other leaders of the Rebel Alliance need a more efficient way to track the fleet’s battle readiness status.&nbsp; Chewbacca is tasked with designing and implementing a database [rethink this part], and he will work closely with stakeholders throughout this project.&nbsp; Ultimately, Rebel leaders need an at-a-glance view of the types, number, and location of both capital ships and fighter craft so that they may [rethink this] against Imperial forces.</p>
+<p>&nbsp;</p>
+<p><strong>Step One: Understand the Current Process</strong></p>
+<p>Before a technical analyst begins designing a new technology solution, prudence requires the analyst to understand the current environment.&nbsp; What are the current processes?&nbsp; After speaking with maintenance personnel throughout the Rebel Fleet, here is a summary of Chewbacca’s understanding of the current environment.</p>
+<p>Each fighter-carrying capital ship is responsible for the repair and maintenance of its own fighter craft.&nbsp; When planning battle engagements Rebel leaders often poll each capital ship for the battle readiness status of the ship’s contingent of fighter craft.&nbsp; Maintenance personnel usually track the status of each fighter craft by keeping lists on what the Old World might call whiteboards.&nbsp; The availability of replacement parts is tracked using a similar manual process.&nbsp; Maintenance personnel must remember a lot of data so when Rebel leaders ask for an update, an update is at the ready.&nbsp; Certainly this process can be improved.</p>
+<p><strong>Step Two:&nbsp; Identify Goals that the New System Should Achieve</strong></p>
+<p>The new database must provide a single repository of fleet battle readiness status information.&nbsp; The repository must reflect the up-to-the-minute battle readiness status of the Rebel Fleet.&nbsp; Rebel leaders must be able to pose questions to this repository and in response receive information critical [to or for] making strategic decisions [about – best word?] future battle engagements.</p>
+<p>&nbsp;</p>
+<p><strong>Step Three:&nbsp; Think About the Information</strong></p>
+<p>Now that Chewbacca understands the environment and the purpose of the new database, let’s examine the information required to determine the fleet’s battle readiness status.</p>
+<p>To begin, what does the Rebel Fleet consist of?&nbsp; The Rebel Fleet is comprised of Rebel capital ships and fighter craft.&nbsp; Chewbacca must consider how these lists are structured.</p>
+<p>The various lists maintained on whiteboards essentially group fighter craft into battle readiness categories.&nbsp; There is a list of fighter craft that are new or refurbished and ready for battle.&nbsp; There is a list of destroyed fighter craft that are obviously no longer available for battle engagements.&nbsp; There is a list of fighter craft that are damaged but still available for battle.&nbsp; Finally, there is a list of damaged fighter craft that must be repaired before they are available for battle engagements.&nbsp; Each of these lists are maintained on every capital ship capable of carrying fighter craft.</p>
+<p>Every capital ship maintains a stockpile of spare parts with inventory tracked in additional lists.&nbsp; Maintenance technicians often trade with technicians on other ships for replacement parts not in inventory.&nbsp; Each capital ship after a battle engagement and only if the tactical situation allows mobilizes salvage craft to recover disabled and remnants of destroyed fighter craft.&nbsp; Salvage technicians then dismantle this wreckage and replenish the ship’s supply of spare parts.</p>
+<p>We now have a high-level view of the kind and structure of the information that we need to centrally store.&nbsp; We can now start to define this data with a bit more depth.</p>
+<p>Let’s begin by thinking about a single fighter craft and see if we can develop a list of “aspects” that define a fighter craft.&nbsp; What comes to mind first is that every fighter craft is assigned to or calls home a single capital ship.&nbsp; The next thing that comes to mind is that there are different kinds of fighter craft, and a fighter craft is generally suited for specific roles in a battle.&nbsp; Some craft may best be suited for attacking enemy fighters while other craft may be designed to bomb targets on planetary surfaces.&nbsp; While a fighter craft may have a specialized role, the craft is not limited to functioning in that role alone.&nbsp; Here is what we have defined so far:</p>
+<ul>
+<ul>
+<li>Assigned capital ship 
+<li>Type of fighter craft 
+<li>Primary role of fighter craft in battle engagement 
+<li>Secondary role of fighter craft in battle engagement</li></ul></ul>
+<p>&nbsp;</p>
+<p>We talked before about how each fighter craft is in a given state:&nbsp; ready for battle, damaged but available for battle, destroyed and no longer in inventory, and damaged and must be repaired before it is ready for battle.&nbsp; So to our list above we can add:</p>
+<ul>
+<ul>
+<li>Battle readiness or simply status</li></ul></ul>
+<p>&nbsp;</p>
+<p>We have a pretty good handle on fighter craft, but we can drill-down a bit more on the status of each craft, especially those craft that are damaged and require repair.&nbsp; There isn’t much to track for destroyed fighter craft.&nbsp; We could try and store information about what spare parts came from which destroyed craft but that is not a priority or focus of this database.&nbsp; Fighter craft ready for battle are defined well enough for now.&nbsp; What is of interest now are those fighter craft that are damaged but still available for battle engagements and those craft that require repair before they are again available for battle.</p>
+<p>Logically, a fighter craft that is damaged but still available for battle is less damaged than a fighter craft that must be repaired before being available for battle.&nbsp; Does this suggest a distinction important enough to indicate in our database?</p>
+<p>Examining both of these statuses together for now, we should start a new list of defining aspects of a fighter craft in need of some degree of repair.&nbsp; The kind of repair and the necessary spare parts come to mind first.&nbsp; We will leave the complexities of repair kits for a later day and stick to simple repairs that involve swapping out a broken part for a new or non-broken part.&nbsp; So our new list so far is:</p>
+<ul>
+<ul>
+<li>System in need of repair 
+<li>Required spare part</li></ul></ul>
+<p>&nbsp;</p>
+<p>Of course we want to track this information for every damaged fighter craft, so to our list we add:</p>
+<ul>
+<ul>
+<li>Fighter craft needing repair</li></ul></ul>
+<p>&nbsp;</p>
+<p>While we are thinking about spare parts, let’s start another list of defining aspects of spare parts available in a ship’s inventory.&nbsp; The name of the kind of spare part is a good place to start.&nbsp; We might also be interested in the condition of the spare parts we have in inventory.&nbsp; Knowing the number of each kind of spare part we have in inventory allows us to understand what we need to trade for and what parts we have enough of to give in trade.&nbsp; We might also like to know the ship system that usually requires such a spare part.&nbsp; So, our list so far looks like this:</p>
+<ul>
+<ul>
+<li>Spare part 
+<li>Condition of spare part 
+<li>Quantity of this spare part in inventory on this ship 
+<li>Ship system repair that typically uses this spare part</li></ul></ul>
+<p>&nbsp;</p>
+<p>At this point we have a good breakdown of the information the new database must track.&nbsp; Let’s summarize what we have:</p>
+<ul>
+<ul>
+<li><strong><em>Fighter craft</em></strong> 
+<ul>
+<li>Assigned capital ship 
+<li>Type of fighter craft 
+<li>Primary role of fighter craft in battle engagement 
+<li>Secondary role of fighter craft in battle engagement 
+<li>Battle readiness or simply status</li></ul>
+<li><strong><em>Repair status</em></strong> 
+<ul>
+<li>System in need of repair 
+<li>Required spare part 
+<li>Fighter craft needing repair</li></ul>
+<li><strong><em>Spare parts inventory</em></strong> 
+<ul>
+<li>Spare part 
+<li>Condition of spare part 
+<li>Quantity of this spare part in inventory on this ship 
+<li>Ship system repair that typically uses this spare part</li></ul></li></ul></ul>
+<p>&nbsp;</p>
+<p><strong>Step Four: Structure the Information</strong></p>
+<p>Now that we know the kinds of data we need to collect and store, how do we structure and store the information?&nbsp; We could continue the list structure but now maintain a single list that includes information from each of the capital ships.&nbsp; This would, however, be a tedious and error-prone chore to keep the list current.&nbsp; One could choose from any number of methods to organize and maintain this information, but for our purposes we will choose to store this information in a SQL database.&nbsp; With this in mind, let’s look at how this data might look if we did choose to keep a central list rather than a database.</p>
+<p>&nbsp;</p>
+<p><strong><em>Rebel Fleet Fighter Craft Inventory</em></strong></p>
+<table bordercolor="black" bordercolordark="white" width="100%" bgcolor="white" bordercolorlight="white" border="1">
+<tbody>
+<tr>
+<td>Name</td>
+<td>Capital Ship</td>
+<td>Type</td>
+<td>Primary Role</td>
+<td width="67">Secondary Role</td>
+<td width="45">Battle Readiness</td></tr>
+<tr>
+<td>
+<p style="margin-right: 0px" dir="ltr">X-Wing 3</p></td>
+<td>Sacred Heart</td>
+<td>X-Wing</td>
+<td>Fighter</td>
+<td width="67">Capital</td>
+<td width="45">Y</td></tr>
+<tr>
+<td>Y-Wing 4</td>
+<td>Thunder Heart</td>
+<td>Y-Wing</td>
+<td>Capital</td>
+<td width="67">Fighter</td>
+<td width="45">Y</td></tr>
+<tr>
+<td>A-Wing 7</td>
+<td>Sacred Heart</td>
+<td>A-Wing</td>
+<td>Fighter</td>
+<td width="67">Capital</td>
+<td width="45">N</td></tr></tbody></table>
+<p>&nbsp;</p>
+<p><strong><em>Rebel Fleet Fighter Craft Repair Status</em></strong></p>
+<table bordercolor="black" bordercolordark="white" width="100%" bgcolor="white" bordercolorlight="white" border="1">
+<tbody>
+<tr>
+<td>Name</td>
+<td>System</td>
+<td>Spare Part</td></tr>
+<tr>
+<td>Y-Wing 4</td>
+<td>Shields: Aft</td>
+<td>Flux Converter</td></tr>
+<tr>
+<td>A-Wing 7</td>
+<td>Weapons</td>
+<td>Photon Channel Guide</td></tr>
+<tr>
+<td>Y-Wing 4</td>
+<td>Engines</td>
+<td>Ion Converter</td></tr>
+<tr>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td></tr></tbody></table>
+<p><strong><em>Rebel Fleet Capital Ship Spare Part Inventory</em></strong></p>
+<table cellspacing="0" cellpadding="2" width="400" border="1">
+<tbody>
+<tr>
+<td valign="top" width="80">Capital Ship</td>
+<td valign="top" width="80">Spare Part</td>
+<td valign="top" width="80">Condition</td>
+<td valign="top" width="80">Quantity</td>
+<td valign="top" width="80">System</td></tr>
+<tr>
+<td valign="top" width="80">Sacred Heart</td>
+<td valign="top" width="80">Flux Converter</td>
+<td valign="top" width="80">New</td>
+<td valign="top" width="80">3</td>
+<td valign="top" width="80">Shields: All</td></tr>
+<tr>
+<td valign="top" width="80">
+<p style="margin-right: 0px" dir="ltr">Sacred Heart</p></td>
+<td valign="top" width="80">Photon Channel Guide</td>
+<td valign="top" width="80">Like New</td>
+<td valign="top" width="80">2</td>
+<td valign="top" width="80">Weapons: All</td></tr>
+<tr>
+<td valign="top" width="80">Thunder Heart</td>
+<td valign="top" width="80">Ion Converter</td>
+<td valign="top" width="80">Acceptable</td>
+<td valign="top" width="80">1</td>
+<td valign="top" width="80">Engines</td></tr>
+<tr>
+<td valign="top" width="80">Thunder Heart</td>
+<td valign="top" width="80">Ion Converter</td>
+<td valign="top" width="80">Like New</td>
+<td valign="top" width="80">1</td>
+<td valign="top" width="80">Engines</td></tr></tbody></table>
+<p>&nbsp;</p>
+<p>For small operations, keeping this kind of information in lists such as these would work just fine.&nbsp; An analyst could use the Star Wars equivalent of Microsoft Excel and analyze these lists in no time; Excel’s pivot tables and charting capabilities can easily tackle this sort of data.&nbsp; For larger operations and especially for mission-critical operations like the Rebel Alliance, a SQL database is a powerful ally indeed, and it isn’t much of a leap from the lists we are so far used to thinking about to the form or structure that SQL databases demand.</p>
+<p><strong>No More Steps:&nbsp; Some Basic Terminology</strong></p>
+<p>From this point on there will be no more <em>steps</em>, just great discussion.&nbsp; We are at that point where we can begin to introduce some basic database terminology that we will use throughout this weblog series.</p>
+<ul>
+<ul>
+<li>Entity 
+<li>Table 
+<li>Base 
+<li>Derived 
+<li>Relation 
+<li>Catalog 
+<li>Schema 
+<li>Row 
+<li>Column 
+<li>Attribute 
+<li>Tuples</li></ul></ul>
+<p>&nbsp;</p>
+<p>The first term we should learn is the <em>table</em>.&nbsp; A table, at least in SQL database terms, </p>
